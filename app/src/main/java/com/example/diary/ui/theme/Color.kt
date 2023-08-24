@@ -81,3 +81,6 @@ val ShamefulColor = Color(0xFF7E57C2)
 val HumorousColor = Color(0xFFFFCA28)
 val SuspiciousColor = Color(0xFFD4E157)
 val BoredColor = Color(0xFF26C6DA)
+
+val ErrorRed = Color(0xFFFF6C60)
+val InfoGreen = Color(0xFF00C096)

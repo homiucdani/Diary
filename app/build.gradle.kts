@@ -36,17 +36,17 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.5.2"
     }
     packaging {
         resources {
@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.7.2")
-    implementation(platform("androidx.compose:compose-bom:2023.03.00"))
+    implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -104,13 +104,12 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Mongo DB Realm
-    implementation("io.realm.kotlin:library-sync:1.10.0") // device sync
+    implementation("io.realm.kotlin:library-sync:1.10.2") // device sync
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
-
-    // Date-Time Picker
-    implementation("com.maxkeppeler.sheets-compose-dialogs:core:1.2.0")
-    implementation("com.maxkeppeler.sheets-compose-dialogs:calendar:1.2.0")
 
     // Desugar JDK (remove api requirements, we use some code which has min sdk 26)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+
+    // Google Auth (One tap)
+    implementation("com.google.android.gms:play-services-auth:20.6.0")
 }

@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Diary</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="signing_in">Signing in...</string>
+    <string name="google_button">Google button</string>
+    <string name="welcome_back">Welcome back</string>
+    <string name="please_sign_in_to_continue">Please sign in to continue.</string>
+    <string name="warning_icon">Warning icon</string>
 </resources>
