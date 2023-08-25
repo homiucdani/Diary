@@ -6,4 +6,13 @@
     <string name="welcome_back">Welcome back</string>
     <string name="please_sign_in_to_continue">Please sign in to continue.</string>
     <string name="warning_icon">Warning icon</string>
+    <string name="diary">Diary</string>
+    <string name="menu_icon">Menu icon</string>
+    <string name="calendar_icon">Calendar icon</string>
+    <string name="add_new_diary">Add new diary</string>
+    <string name="logo">Logo</string>
+    <string name="google_logo">Google logo</string>
+    <string name="no_option">No</string>
+    <string name="yes_option">Yes</string>
+    <string name="sign_out">Sign out</string>
 </resources>

@@ -1,12 +1,16 @@
 package com.example.diary.presentation.authentication
 
+import android.app.Activity
+import android.util.Log
+import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diary.util.Constants
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
-import io.realm.kotlin.mongodb.GoogleAuthType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,9 +44,7 @@ class AuthScreenViewModel @Inject constructor(
     }
 
     fun signInWithMongoAtlas(
-        token: String,
-        onSuccess: (Boolean) -> Unit,
-        onError: (Exception) -> Unit
+        token: String
     ) {
         viewModelScope.launch {
             try {
@@ -54,15 +56,58 @@ class AuthScreenViewModel @Inject constructor(
                             )
                         ).loggedIn
                 }
-                withContext(Dispatchers.Main) {
-                    onSuccess(result)
+                if (result) {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            messageBarUi = it.messageBarUi.copy(
+                                message = "Successfully Authenticated.",
+                                exception = null
+                            ),
+                            isAuthenticated = true
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    onError(e)
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        messageBarUi = it.messageBarUi.copy(exception = e, message = null)
+                    )
                 }
             }
         }
+    }
+
+    fun requestOneTap(
+        activity: Activity,
+        launch: (IntentSenderRequest) -> Unit
+    ) {
+        val signInClient = Identity.getSignInClient(activity)
+        val signInRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(Constants.CLIEND_ID)
+                    .build()
+            )
+            .setAutoSelectEnabled(true)
+            .build()
+
+        signInClient.beginSignIn(signInRequest)
+            .addOnSuccessListener { result ->
+                try {
+                    launch(IntentSenderRequest.Builder(result.pendingIntent.intentSender).build())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Log.d("SignIn", "signIn: Couldn't start one tap Ui ${e.message}")
+                }
+            }
+            .addOnFailureListener { exception ->
+                exception.printStackTrace()
+                Log.d("SignIn", "signIn: Something went wrong ${exception.message}")
+            }
     }
 }

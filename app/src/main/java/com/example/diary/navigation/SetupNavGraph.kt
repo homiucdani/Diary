@@ -3,10 +3,10 @@ package com.example.diary.navigation
 import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,8 +16,9 @@ import androidx.navigation.navArgument
 import com.example.diary.presentation.authentication.AuthScreen
 import com.example.diary.presentation.authentication.AuthScreenViewModel
 import com.example.diary.presentation.authentication.GoogleOneTap
-import com.example.diary.presentation.authentication.signIn
-
+import com.example.diary.presentation.home.HomeScreen
+import com.example.diary.presentation.home.HomeViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun SetupNavGraph(
@@ -28,14 +29,33 @@ fun SetupNavGraph(
         navController = navHostController,
         startDestination = startDestination
     ) {
-        authenticationRoute()
-        homeRoute()
-        writeRoute()
+        authenticationRoute(
+            navigateToHome = {
+                navHostController.popBackStack()
+                navHostController.navigate(Screen.Home.route)
+            }
+        )
+
+        homeRoute(
+            onAddNewDiary = {
+                navHostController.navigate(Screen.Details.route)
+            },
+            navigateToAuth = {
+                navHostController.navigate(Screen.Authentication.route) {
+                    popUpTo(route = Screen.Home.route) {
+                        inclusive = true
+                    }
+                }
+            }
+        )
+        detailsRoute()
     }
 }
 
-fun NavGraphBuilder.authenticationRoute() {
-    composable(route = Screen.Authentication.route) {
+fun NavGraphBuilder.authenticationRoute(navigateToHome: () -> Unit) {
+    composable(
+        route = Screen.Authentication.route
+    ) {
         val authViewModel: AuthScreenViewModel = hiltViewModel()
         val state = authViewModel.state.collectAsState().value
 
@@ -52,7 +72,7 @@ fun NavGraphBuilder.authenticationRoute() {
             key = state.isLoading,
             launch = { launcher ->
                 if (state.isLoading) {
-                    signIn(
+                    authViewModel.requestOneTap(
                         activity = activity,
                         launch = { intentSenderRequest ->
                             launcher.launch(intentSenderRequest)
@@ -63,16 +83,7 @@ fun NavGraphBuilder.authenticationRoute() {
             onResultReceived = { token ->
                 Log.d("TOKEN", "authenticationRoute: $token")
                 authViewModel.signInWithMongoAtlas(
-                    token = token,
-                    onSuccess = { isSuccessfullyLoggedIn ->
-                        if (isSuccessfullyLoggedIn) {
-                            authViewModel.addErrorOrMessage(message = "Successfully Authenticated.")
-                            authViewModel.onSignInClick(false)
-                        }
-                    },
-                    onError = { exception ->
-                        authViewModel.addErrorOrMessage(error = exception)
-                    }
+                    token = token
                 )
             },
             onDismissDialog = { error ->
@@ -80,18 +91,36 @@ fun NavGraphBuilder.authenticationRoute() {
                 authViewModel.onSignInClick(false)
             }
         )
+
+        LaunchedEffect(key1 = state.isAuthenticated) {
+            if (state.isAuthenticated) {
+                delay(600)
+                navigateToHome()
+            }
+        }
     }
 }
 
-fun NavGraphBuilder.homeRoute() {
+fun NavGraphBuilder.homeRoute(
+    onAddNewDiary: () -> Unit,
+    navigateToAuth: () -> Unit
+) {
     composable(route = Screen.Home.route) {
+        val homeViewModel: HomeViewModel = hiltViewModel()
 
+        HomeScreen(
+            onSignOut = {
+                homeViewModel.signOut()
+                navigateToAuth()
+            },
+            onAddNewDiary = onAddNewDiary
+        )
     }
 }
 
-fun NavGraphBuilder.writeRoute() {
+fun NavGraphBuilder.detailsRoute() {
     composable(
-        route = Screen.Write.route,
+        route = Screen.Details.route,
         arguments = listOf(
             navArgument(name = "diaryId") {
                 type = NavType.StringType

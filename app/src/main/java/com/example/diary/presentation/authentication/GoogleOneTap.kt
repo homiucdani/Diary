@@ -11,9 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import com.example.diary.util.Constants
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
@@ -66,36 +63,4 @@ fun GoogleOneTap(
     LaunchedEffect(key1 = key) {
         launch(launcher)
     }
-}
-
-
-fun signIn(
-    activity: Activity,
-    launch: (IntentSenderRequest) -> Unit
-) {
-    val signInClient = Identity.getSignInClient(activity)
-    val signInRequest = BeginSignInRequest.builder()
-        .setGoogleIdTokenRequestOptions(
-            GoogleIdTokenRequestOptions.builder()
-                .setSupported(true)
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(Constants.CLIEND_ID)
-                .build()
-        )
-        .setAutoSelectEnabled(true)
-        .build()
-
-    signInClient.beginSignIn(signInRequest)
-        .addOnSuccessListener { result ->
-            try {
-                launch(IntentSenderRequest.Builder(result.pendingIntent.intentSender).build())
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.d("SignIn", "signIn: Couldn't start one tap Ui ${e.message}")
-            }
-        }
-        .addOnFailureListener { exception ->
-            exception.printStackTrace()
-            Log.d("SignIn", "signIn: Something went wrong ${exception.message}")
-        }
 }
