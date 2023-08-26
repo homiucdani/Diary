@@ -15,4 +15,5 @@
     <string name="no_option">No</string>
     <string name="yes_option">Yes</string>
     <string name="sign_out">Sign out</string>
+    <string name="gallery_image">Gallery image</string>
 </resources>

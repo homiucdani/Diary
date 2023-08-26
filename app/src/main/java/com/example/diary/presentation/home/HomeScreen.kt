@@ -3,6 +3,7 @@ package com.example.diary.presentation.home
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.DrawerValue
@@ -19,8 +20,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.diary.R
 import com.example.diary.presentation.home.components.CustomAlertDialog
+import com.example.diary.presentation.home.components.HomeContent
 import com.example.diary.presentation.home.components.HomeNavigationDrawer
 import com.example.diary.presentation.home.components.HomeTopAppBar
 import kotlinx.coroutines.launch
@@ -81,6 +84,14 @@ fun HomeScreen(
                     alertDialogState = false
                 },
                 onYesClick = onSignOut
+            )
+
+            HomeContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.surface)
+                    .padding(paddingValues)
+                    .padding(horizontal = 20.dp)
             )
         }
     }
