@@ -1,6 +1,7 @@
 package com.example.diary.presentation.home.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -51,25 +55,41 @@ import com.example.diary.domain.model.Mood
 import com.example.diary.ui.theme.Elevation
 import com.example.diary.util.toInstant
 import com.example.diary.util.toStringTime
-import io.realm.kotlin.ext.realmListOf
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.max
 
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    allDiaries: Map<LocalDate, List<Diary>>,
+    isLoading: Boolean,
+    onDiaryClick: (String) -> Unit
 ) {
-    Column(modifier = modifier) {
-        DateHeader(localDate = LocalDate.now())
-        DiaryHolder(diary = Diary().apply {
-            title = "Some title"
-            description =
-                "This is some random text, to test the new functionality that we added, so stay tuned for new updates on this."
-            mood = Mood.Happy.name
-            images = realmListOf("", "")
-        }, onDiaryClick = {})
+    if (allDiaries.isEmpty()) {
+        EmptyContent(isLoading = isLoading)
+    } else {
+        LazyColumn(
+            modifier = modifier
+        ) {
+            allDiaries.forEach { (localDate, diaries) ->
+                stickyHeader(key = localDate) {
+                    DateHeader(localDate = localDate)
+                }
+                items(
+                    items = diaries,
+                    key = {
+                        it._id.toString()
+                    }
+                ) { diary ->
+                    DiaryHolder(
+                        diary = diary,
+                        onDiaryClick = onDiaryClick
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -78,7 +98,7 @@ fun DateHeader(
     localDate: LocalDate
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth() ,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
@@ -117,7 +137,7 @@ fun DateHeader(
                     fontSize = MaterialTheme.typography.bodySmall.fontSize,
                     fontWeight = FontWeight.Light
                 ),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         }
     }
@@ -149,17 +169,21 @@ fun DiaryHolder(
             ) {
                 onDiaryClick(diary._id.toHexString())
             }
+            .padding(top = 10.dp)
     ) {
 
-        Spacer(modifier = Modifier.width(10.dp))
+
+        // line
+        Spacer(modifier = Modifier.width(12.dp))
         Surface(
             modifier = Modifier
                 .width(2.dp)
                 .height(componentHeight + 14.dp),
             tonalElevation = Elevation.Level2
         ) {}
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
+        // component
         Surface(
             modifier = Modifier.onGloballyPositioned {
                 componentHeight = with(localDensity) { it.size.height.toDp() }
@@ -288,7 +312,8 @@ fun ExpandableGallery(
                     contentDescription = stringResource(R.string.gallery_image),
                     modifier = Modifier
                         .clip(imageShape)
-                        .size(imageSize)
+                        .size(imageSize),
+                    contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.width(spaceBetween))
             }

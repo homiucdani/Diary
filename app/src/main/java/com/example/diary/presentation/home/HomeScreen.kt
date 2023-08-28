@@ -31,8 +31,10 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
+    state: HomeState,
     onSignOut: () -> Unit,
-    onAddNewDiary: () -> Unit
+    onAddNewDiary: () -> Unit,
+    onDiaryClick: (String) -> Unit
 ) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -73,8 +75,8 @@ fun HomeScreen(
                 }
             },
             modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.surface)
                 .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.surface)
         ) { paddingValues ->
             CustomAlertDialog(
                 title = stringResource(R.string.sign_out),
@@ -91,7 +93,10 @@ fun HomeScreen(
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.surface)
                     .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 24.dp),
+                onDiaryClick = onDiaryClick,
+                allDiaries = state.diaries,
+                isLoading = state.isLoading
             )
         }
     }

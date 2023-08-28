@@ -21,7 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthScreenViewModel @Inject constructor(
-    private val mongoDb: App
+    private val mongoApp: App
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthScreenState())
@@ -49,7 +49,7 @@ class AuthScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) {
-                    mongoDb
+                    mongoApp
                         .login(
                             Credentials.jwt(
                                 jwtToken = token

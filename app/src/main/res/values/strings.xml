@@ -16,4 +16,6 @@
     <string name="yes_option">Yes</string>
     <string name="sign_out">Sign out</string>
     <string name="gallery_image">Gallery image</string>
+    <string name="empty_diary">Empty diary.</string>
+    <string name="write_something">Write something.</string>
 </resources>

@@ -20,6 +20,7 @@ import com.example.diary.presentation.home.HomeScreen
 import com.example.diary.presentation.home.HomeViewModel
 import kotlinx.coroutines.delay
 
+
 @Composable
 fun SetupNavGraph(
     startDestination: String,
@@ -46,6 +47,9 @@ fun SetupNavGraph(
                         inclusive = true
                     }
                 }
+            },
+            navigateToDiaryScreen = { diaryId ->
+
             }
         )
         detailsRoute()
@@ -103,17 +107,21 @@ fun NavGraphBuilder.authenticationRoute(navigateToHome: () -> Unit) {
 
 fun NavGraphBuilder.homeRoute(
     onAddNewDiary: () -> Unit,
-    navigateToAuth: () -> Unit
+    navigateToAuth: () -> Unit,
+    navigateToDiaryScreen: (String) -> Unit
 ) {
     composable(route = Screen.Home.route) {
         val homeViewModel: HomeViewModel = hiltViewModel()
+        val state = homeViewModel.state.collectAsState().value
 
         HomeScreen(
+            state = state,
             onSignOut = {
                 homeViewModel.signOut()
                 navigateToAuth()
             },
-            onAddNewDiary = onAddNewDiary
+            onAddNewDiary = onAddNewDiary,
+            onDiaryClick = navigateToDiaryScreen
         )
     }
 }
