@@ -1,6 +1,10 @@
 package com.example.diary.presentation.home.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,7 +48,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -98,10 +101,12 @@ fun DateHeader(
     localDate: LocalDate
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth() ,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.surface),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = localDate.dayOfMonth.toString(),
                 style = TextStyle(
@@ -172,16 +177,15 @@ fun DiaryHolder(
             .padding(top = 10.dp)
     ) {
 
-
         // line
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(11.dp))
         Surface(
             modifier = Modifier
                 .width(2.dp)
                 .height(componentHeight + 14.dp),
             tonalElevation = Elevation.Level2
         ) {}
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         // component
         Surface(
@@ -215,7 +219,13 @@ fun DiaryHolder(
 
                 AnimatedVisibility(
                     modifier = Modifier.padding(14.dp),
-                    visible = expandGallery
+                    visible = expandGallery,
+                    enter = fadeIn() + expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
                 ) {
                     ExpandableGallery(
                         images = diary.images
@@ -285,7 +295,7 @@ fun ExpandableGallery(
 
     BoxWithConstraints(modifier = modifier) {
         // the derived state will not cause the calculation to be recalculated cuz we are inside a composable and it can recompose
-        // 20 times and we dont wanna recalculate those values, only if the values inside change
+        // 20 times and we don't wanna recalculate those values, only if the values inside change
 
         val numberOfVisibleImages = remember {
             derivedStateOf {
@@ -368,15 +378,5 @@ fun ShowGalleryButton(
                 fontSize = MaterialTheme.typography.bodySmall.fontSize
             )
         )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DateHeaderPreview() {
-    MaterialTheme {
-        Column {
-
-        }
     }
 }

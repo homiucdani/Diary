@@ -2,6 +2,7 @@ package com.example.diary.data.remote
 
 import com.example.diary.domain.model.Diary
 import com.example.diary.domain.repository.MongoRepository
+import com.example.diary.util.Constants.APP_ID
 import com.example.diary.util.RequestState
 import com.example.diary.util.toInstant
 import io.realm.kotlin.Realm
@@ -13,14 +14,14 @@ import io.realm.kotlin.query.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import org.mongodb.kbson.ObjectId
 import java.time.LocalDate
 import java.time.ZoneId
 
-class MongoRepositoryImpl(
-    private val mongoApp: App
-) : MongoRepository {
+object MongoRepositoryImpl : MongoRepository {
 
-    private val user = mongoApp.currentUser
+    private val app = App.create(APP_ID)
+    private val user = app.currentUser
     private lateinit var realm: Realm
 
     init {
@@ -29,17 +30,11 @@ class MongoRepositoryImpl(
 
     override fun configureRealm() {
         if (user != null) {
-            val config = SyncConfiguration
-                .Builder(user, setOf(Diary::class))
-                // we wanna subscribe to the ownerId data only, not other users
+            val config = SyncConfiguration.Builder(user, setOf(Diary::class))
                 .initialSubscriptions { sub ->
                     add(
-                        //$0 means first element after the "," -> user.id
-                        query = sub.query<Diary>(
-                            "ownerId == $0",
-                            user.id
-                        ),
-                        name = "User Diaries"
+                        query = sub.query<Diary>(query = "ownerId == $0", user.id),
+                        name = "User's Diaries"
                     )
                 }
                 .log(LogLevel.ALL)
@@ -72,6 +67,71 @@ class MongoRepositoryImpl(
             flow {
                 emit(RequestState.Error(UserNotAuthenticatedException()))
             }
+        }
+    }
+
+    override fun getDiaryById(diaryId: ObjectId): Flow<RequestState<Diary>> {
+        return if (user != null) {
+            try {
+                realm.query<Diary>(query = "_id == $0", diaryId).asFlow().map {
+                    RequestState.Success(data = it.list.first())
+                }
+            } catch (e: Exception) {
+                flow { emit(RequestState.Error(e)) }
+            }
+        } else {
+            flow { emit(RequestState.Error(UserNotAuthenticatedException())) }
+        }
+    }
+
+    override suspend fun insertDiary(diary: Diary) {
+        if (user != null) {
+            realm.write {
+                try {
+                    copyToRealm(
+                        instance = diary.apply {// user needs an owner id into constructor, it can be applied here
+                            ownerId = user.id
+                        }
+                    )
+                } catch (e: Exception) {
+                    RequestState.Error(e)
+                }
+            }
+        }
+    }
+
+    override suspend fun updateDiary(diary: Diary) {
+        if (user != null) {
+            realm.write {
+                val queriedDiary = query<Diary>(query = "_id == $0", diary._id).first().find()
+                if (queriedDiary != null) {
+                    queriedDiary.title = diary.title
+                    queriedDiary.description = diary.description
+                    queriedDiary.mood = diary.mood
+                    queriedDiary.images = diary.images
+                    queriedDiary.date = diary.date
+                    RequestState.Success(data = queriedDiary)
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteDiary(diaryId: ObjectId): RequestState<String> {
+        return if (user != null) {
+            realm.write {
+                try {
+                    val diary =
+                        query<Diary>(query = "_id == $0 AND ownerId == $1", diaryId, user.id).find()
+                            .first()
+                    delete(diary)
+                    RequestState.Success("Deleted successfully.")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    RequestState.Error(Exception(e))
+                }
+            }
+        } else {
+            RequestState.Error(Exception("Something went wrong."))
         }
     }
 }

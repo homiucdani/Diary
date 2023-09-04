@@ -1,4 +1,4 @@
-package com.example.diary.presentation.home.components
+package com.example.diary.core.presentation.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.example.diary.R
 
 @Composable
@@ -45,7 +46,8 @@ fun CustomAlertDialog(
                 Text(
                     text = message,
                     fontSize = MaterialTheme.typography.titleMedium.fontSize,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Start
                 )
             }
         )

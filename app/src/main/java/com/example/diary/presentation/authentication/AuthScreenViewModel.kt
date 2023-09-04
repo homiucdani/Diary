@@ -6,9 +6,9 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diary.util.Constants
+import com.example.diary.util.Constants.APP_ID
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
-import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
 import kotlinx.coroutines.Dispatchers
@@ -17,13 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class AuthScreenViewModel @Inject constructor(
-    private val mongoApp: App
-) : ViewModel() {
+class AuthScreenViewModel : ViewModel() {
 
+    private val app = App.create(APP_ID)
     private val _state = MutableStateFlow(AuthScreenState())
     val state = _state.asStateFlow()
 
@@ -49,7 +46,7 @@ class AuthScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) {
-                    mongoApp
+                    app
                         .login(
                             Credentials.jwt(
                                 jwtToken = token

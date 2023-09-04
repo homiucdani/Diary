@@ -3,22 +3,18 @@ package com.example.diary.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diary.core.presentation.util.MessageBarUi
-import com.example.diary.domain.repository.MongoRepository
+import com.example.diary.data.remote.MongoRepositoryImpl
+import com.example.diary.util.Constants.APP_ID
 import com.example.diary.util.RequestState
-import dagger.hilt.android.lifecycle.HiltViewModel
 import io.realm.kotlin.mongodb.App
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val mongoDb: App,
-    private val mongoRepository: MongoRepository
-) : ViewModel() {
+class HomeViewModel : ViewModel() {
 
+    private val app = App.create(APP_ID)
 
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
@@ -29,7 +25,7 @@ class HomeViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
-            mongoDb.currentUser?.logOut()
+            app.currentUser?.logOut()
         }
     }
 
@@ -40,7 +36,7 @@ class HomeViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            mongoRepository.getAllDiaries().collect { result ->
+            MongoRepositoryImpl.getAllDiaries().collect { result ->
                 when (result) {
                     is RequestState.Success -> {
                         _state.update {

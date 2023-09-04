@@ -9,6 +9,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.example.diary.R
@@ -17,9 +18,11 @@ import com.example.diary.R
 @Composable
 fun HomeTopAppBar(
     onMenuClicked: () -> Unit,
-    onCalendarClick: () -> Unit
+    onCalendarClick: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior
 ) {
     TopAppBar(
+        scrollBehavior = scrollBehavior,
         title = {
             Text(text = stringResource(R.string.diary))
         },
