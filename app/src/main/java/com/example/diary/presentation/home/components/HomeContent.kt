@@ -66,17 +66,17 @@ import kotlin.math.max
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
-    allDiaries: Map<LocalDate, List<Diary>>,
-    isLoading: Boolean,
+    allDiaries: () -> Map<LocalDate, List<Diary>>,
+    isLoading: () -> Boolean,
     onDiaryClick: (String) -> Unit
 ) {
-    if (allDiaries.isEmpty()) {
-        EmptyContent(isLoading = isLoading)
+    if (allDiaries().isEmpty()) {
+        EmptyContent(isLoading = isLoading())
     } else {
         LazyColumn(
             modifier = modifier
         ) {
-            allDiaries.forEach { (localDate, diaries) ->
+            allDiaries().forEach { (localDate, diaries) ->
                 stickyHeader(key = localDate) {
                     DateHeader(localDate = localDate)
                 }
@@ -100,6 +100,7 @@ fun HomeContent(
 fun DateHeader(
     localDate: LocalDate
 ) {
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -128,8 +129,7 @@ fun DateHeader(
 
         Column {
             Text(
-                text = localDate.month.toString().lowercase().replaceFirstChar { it.titlecase() }
-                    .take(3),
+                text = localDate.month.toString().lowercase().replaceFirstChar { it.titlecase() }.take(3),
                 style = TextStyle(
                     fontSize = MaterialTheme.typography.titleLarge.fontSize,
                     fontWeight = FontWeight.Light
@@ -174,7 +174,6 @@ fun DiaryHolder(
             ) {
                 onDiaryClick(diary._id.toHexString())
             }
-            .padding(top = 10.dp)
     ) {
 
         // line

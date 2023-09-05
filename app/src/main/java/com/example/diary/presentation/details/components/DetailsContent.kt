@@ -40,9 +40,9 @@ fun DetailsContent(
     modifier: Modifier = Modifier,
     pagerState: PagerState,
     selectedDiaryId: String?,
-    title: String,
+    title: () -> String,
     onTitleChange: (String) -> Unit,
-    description: String,
+    description: () -> String,
     onDescriptionChange: (String) -> Unit,
     onMoodChange: (Mood) -> Unit,
     onSaveOrUpdateClick: () -> Unit
@@ -55,7 +55,7 @@ fun DetailsContent(
     LaunchedEffect(key1 = scrollState.maxValue) {
         scrollState.scrollTo(scrollState.maxValue)
     }
-
+    
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween
@@ -85,7 +85,7 @@ fun DetailsContent(
 
             TextField(
                 modifier = Modifier.fillMaxWidth(),
-                value = title,
+                value = title(),
                 onValueChange = onTitleChange,
                 placeholder = {
                     Text(text = "Title")
@@ -114,7 +114,7 @@ fun DetailsContent(
 
             TextField(
                 modifier = Modifier.fillMaxWidth(),
-                value = description,
+                value = description(),
                 onValueChange = onDescriptionChange,
                 placeholder = {
                     Text(text = "Tell me about it.")

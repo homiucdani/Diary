@@ -16,6 +16,10 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -25,19 +29,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.diary.R
+import com.example.diary.core.presentation.components.CustomAlertDialog
+
+
+val navDrawerItemReusableModifier = Modifier
+    .fillMaxWidth()
+    .padding(horizontal = 12.dp)
 
 @Composable
 fun HomeNavigationDrawer(
     modifier: Modifier = Modifier,
-    drawerState: DrawerState,
+    drawerState: () -> DrawerState,
     onSignOut: () -> Unit,
     content: @Composable () -> Unit
 ) {
 
+    var alertDialogState by remember {
+        mutableStateOf(false)
+    }
 
     ModalNavigationDrawer(
         modifier = modifier,
-        drawerState = drawerState,
+        drawerState = drawerState(),
         drawerContent = {
             ModalDrawerSheet {
                 Image(
@@ -53,9 +66,7 @@ fun HomeNavigationDrawer(
                 NavigationDrawerItem(
                     label = {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp),
+                            modifier = navDrawerItemReusableModifier,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -76,11 +87,23 @@ fun HomeNavigationDrawer(
                         }
                     },
                     selected = false,
-                    onClick = onSignOut
+                    onClick = {
+                        alertDialogState = true
+                    }
                 )
             }
 
         },
         content = content
+    )
+
+    CustomAlertDialog(
+        title = stringResource(R.string.sign_out),
+        message = "Are you sure you want to Sign Out from your Google Account?",
+        isOpen = alertDialogState,
+        onNoClick = {
+            alertDialogState = false
+        },
+        onYesClick = onSignOut
     )
 }

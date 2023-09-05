@@ -62,9 +62,9 @@ import java.time.ZonedDateTime
 @Composable
 fun DetailsTopAppBar(
     selectedDiaryId: String?,
-    diaryTitle: String,
-    diaryTime: Instant,
-    moodName: String,
+    diaryTitle: () -> String,
+    diaryTime: () -> Instant,
+    moodName: () -> String,
     onBackClick: () -> Unit,
     onDateTimeUpdate: (ZonedDateTime) -> Unit,
     onDeleteClick: () -> Unit
@@ -97,7 +97,7 @@ fun DetailsTopAppBar(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = moodName,
+                    text = moodName(),
                     style = TextStyle(
                         fontWeight = FontWeight.Bold,
                         fontSize = MaterialTheme.typography.titleLarge.fontSize
@@ -105,7 +105,7 @@ fun DetailsTopAppBar(
                 )
 
                 Text(
-                    text = diaryTime.formatDateTimeToPattern("dd MMM yyyy, hh:mm a").uppercase(),
+                    text = diaryTime().formatDateTimeToPattern("dd MMM yyyy, hh:mm a").uppercase(),
                     style = TextStyle(
                         fontSize = MaterialTheme.typography.bodySmall.fontSize
                     )
@@ -131,7 +131,7 @@ fun DetailsTopAppBar(
             )
             if (selectedDiaryId != null) {
                 MoreSettingsAction(
-                    diaryTitle = diaryTitle,
+                    diaryTitle = diaryTitle(),
                     onDeleteClick = onDeleteClick
                 )
             }

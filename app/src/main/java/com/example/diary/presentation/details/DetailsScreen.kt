@@ -44,9 +44,15 @@ fun DetailsScreen(
                 onBackClick = onBackClick,
                 selectedDiaryId = selectedDiaryId,
                 onDeleteClick = onDeleteClick,
-                moodName = state.mood.name,
-                diaryTitle = state.title,
-                diaryTime = state.date,
+                moodName = {
+                    state.mood.name
+                },
+                diaryTitle = {
+                    state.title
+                },
+                diaryTime = {
+                    state.date
+                },
                 onDateTimeUpdate = { zonedDateTime ->
                     onDateTimeUpdate(zonedDateTime)
                 }
@@ -66,9 +72,13 @@ fun DetailsScreen(
                 .padding(bottom = 24.dp)
                 .padding(horizontal = 24.dp),
             pagerState = pagerState,
-            title = state.title,
+            title = {
+                state.title
+            },
             onTitleChange = onTitleChange,
-            description = state.description,
+            description = {
+                state.description
+            },
             onDescriptionChange = onDescriptionChange,
             onMoodChange = onMoodChange,
             onSaveOrUpdateClick = onSaveOrUpdateClick,
