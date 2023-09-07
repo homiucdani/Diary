@@ -1,5 +1,6 @@
 package com.example.diary.presentation.details.components
 
+import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,10 +15,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.diary.domain.model.GalleryImage
 import com.example.diary.domain.model.Mood
 import kotlinx.coroutines.launch
 
@@ -45,7 +49,11 @@ fun DetailsContent(
     description: () -> String,
     onDescriptionChange: (String) -> Unit,
     onMoodChange: (Mood) -> Unit,
-    onSaveOrUpdateClick: () -> Unit
+    onSaveOrUpdateClick: () -> Unit,
+    galleryImages: () -> List<GalleryImage>,
+    onImageSelect: (Uri) -> Unit,
+    isUploadingImages: () -> Boolean,
+    onImageClick: (GalleryImage) -> Unit
 ) {
 
     val scrollState = rememberScrollState()
@@ -55,7 +63,7 @@ fun DetailsContent(
     LaunchedEffect(key1 = scrollState.maxValue) {
         scrollState.scrollTo(scrollState.maxValue)
     }
-    
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.SpaceBetween
@@ -66,6 +74,7 @@ fun DetailsContent(
                 .verticalScroll(state = scrollState)
         ) {
             Spacer(modifier = Modifier.height(30.dp))
+
             HorizontalPager(
                 state = pagerState,
                 pageCount = Mood.values().size
@@ -81,24 +90,13 @@ fun DetailsContent(
                 )
                 onMoodChange(Mood.values()[pageNumber])
             }
+
             Spacer(modifier = Modifier.height(30.dp))
 
-            TextField(
+            ReusableInputField(
                 modifier = Modifier.fillMaxWidth(),
-                value = title(),
-                onValueChange = onTitleChange,
-                placeholder = {
-                    Text(text = "Title")
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Unspecified,
-                    disabledIndicatorColor = Color.Unspecified,
-                    unfocusedIndicatorColor = Color.Unspecified,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                ),
+                text = title,
+                onTextChange = onTitleChange,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
                     onNext = {
@@ -108,17 +106,7 @@ fun DetailsContent(
                         focusManager.moveFocus(FocusDirection.Down)
                     }
                 ),
-                maxLines = 1,
-                singleLine = true
-            )
-
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = description(),
-                onValueChange = onDescriptionChange,
-                placeholder = {
-                    Text(text = "Tell me about it.")
-                },
+                singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -128,12 +116,29 @@ fun DetailsContent(
                     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 ),
+                placeholder = "Title"
+            )
+
+            ReusableInputField(
+                modifier = Modifier.fillMaxWidth(),
+                text = description,
+                onTextChange = onDescriptionChange,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
                     }
-                )
+                ),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Unspecified,
+                    disabledIndicatorColor = Color.Unspecified,
+                    unfocusedIndicatorColor = Color.Unspecified,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                ),
+                placeholder = "Tell me about it."
             )
         }
 
@@ -141,6 +146,13 @@ fun DetailsContent(
             verticalArrangement = Arrangement.Bottom
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+            GalleryComponent(
+                galleryImages = galleryImages,
+                onImageSelect = onImageSelect,
+                onImageClick = onImageClick
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,8 +162,38 @@ fun DetailsContent(
                 },
                 shape = Shapes().small
             ) {
-                Text(text = if (selectedDiaryId == null) "Save" else "Update")
+                if (isUploadingImages()) {
+                    CircularProgressIndicator()
+                } else {
+                    Text(text = if (selectedDiaryId == null) "Save" else "Update")
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ReusableInputField(
+    modifier: Modifier = Modifier,
+    text: () -> String,
+    onTextChange: (String) -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    singleLine: Boolean = false,
+    colors: TextFieldColors,
+    placeholder: String
+) {
+    TextField(
+        modifier = modifier,
+        value = text(),
+        onValueChange = onTextChange,
+        placeholder = {
+            Text(text = placeholder)
+        },
+        colors = colors,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+        singleLine = singleLine
+    )
 }

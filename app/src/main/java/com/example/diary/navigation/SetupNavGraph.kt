@@ -1,7 +1,6 @@
 package com.example.diary.navigation
 
 import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.rememberPagerState
@@ -112,14 +111,10 @@ fun NavGraphBuilder.authenticationRoute(
                 }
             },
             onResultReceived = { token ->
-                Log.d("TOKEN", "authenticationRoute: $token")
-                authViewModel.signInWithMongoAtlas(
-                    token = token
-                )
+                authViewModel.signInWithFirebase(token)
             },
             onDismissDialog = { error ->
                 authViewModel.addErrorOrMessage(error = Exception(error))
-                authViewModel.onSignInClick(false)
             }
         )
 
@@ -176,6 +171,7 @@ fun NavGraphBuilder.detailsRoute(
     ) { args ->
         val detailsViewModel: DetailsViewModel = hiltViewModel()
         val state = detailsViewModel.state.collectAsState().value
+        val galleryImageState = detailsViewModel.galleryImages
 
         val pagerState = rememberPagerState()
         val diaryId = args.arguments?.getString("diaryId")
@@ -195,7 +191,9 @@ fun NavGraphBuilder.detailsRoute(
         DetailsScreen(
             state = state,
             onBackClick = onBackClick,
-            pagerState = pagerState,
+            pagerState = {
+                pagerState
+            },
             onTitleChange = { title ->
                 detailsViewModel.onTitleChange(title)
             },
@@ -208,18 +206,38 @@ fun NavGraphBuilder.detailsRoute(
             selectedDiaryId = diaryId,
             onSaveOrUpdateClick = {
                 if (diaryId == null) {
-                    detailsViewModel.insertDiaryIntoDb().also { onBackClick() }
+                    detailsViewModel.insertDiaryIntoDb()
+                    if (!state.isUploadingImages) {
+                        onBackClick()
+                    }
                 } else {
                     detailsViewModel.updateDiaryIntoDb()
+                    if (!state.isUploadingImages) {
+                        onBackClick()
+                    }
                 }
             },
-            snackbarHostState = snackbarHostState,
+            snackbarHostState = { snackbarHostState },
             onDateTimeUpdate = { zonedDateTime ->
                 detailsViewModel.updateDateTime(zonedDateTime)
             },
             onDeleteClick = {
                 detailsViewModel.deleteDiary().also { popOnDelete() }
                 Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
+            },
+            galleryImages = {
+                galleryImageState
+            },
+            onImageSelect = { imageUri ->
+                //image '/' jpeg
+                val type = context.contentResolver.getType(imageUri)?.split("/")?.last() ?: "jpg"
+                detailsViewModel.addImage(
+                    image = imageUri,
+                    imageType = type
+                )
+            },
+            onDeleteImageClick = { galleryImage ->
+                detailsViewModel.scheduleRemove(galleryImage)
             }
         )
     }

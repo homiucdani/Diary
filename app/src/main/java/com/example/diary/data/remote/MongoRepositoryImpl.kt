@@ -84,8 +84,8 @@ object MongoRepositoryImpl : MongoRepository {
         }
     }
 
-    override suspend fun insertDiary(diary: Diary) {
-        if (user != null) {
+    override suspend fun insertDiary(diary: Diary): RequestState<Boolean> {
+        return if (user != null) {
             realm.write {
                 try {
                     copyToRealm(
@@ -93,15 +93,18 @@ object MongoRepositoryImpl : MongoRepository {
                             ownerId = user.id
                         }
                     )
+                    RequestState.Success(data = true)
                 } catch (e: Exception) {
                     RequestState.Error(e)
                 }
             }
+        } else {
+            RequestState.Error(Exception("Something went wrong."))
         }
     }
 
-    override suspend fun updateDiary(diary: Diary) {
-        if (user != null) {
+    override suspend fun updateDiary(diary: Diary): RequestState<Boolean> {
+        return if (user != null) {
             realm.write {
                 val queriedDiary = query<Diary>(query = "_id == $0", diary._id).first().find()
                 if (queriedDiary != null) {
@@ -110,9 +113,11 @@ object MongoRepositoryImpl : MongoRepository {
                     queriedDiary.mood = diary.mood
                     queriedDiary.images = diary.images
                     queriedDiary.date = diary.date
-                    RequestState.Success(data = queriedDiary)
                 }
+                RequestState.Success(data = true)
             }
+        } else {
+            RequestState.Error(data = Exception("Something went wrong."))
         }
     }
 

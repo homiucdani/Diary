@@ -5,10 +5,13 @@ import android.util.Log
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diary.core.presentation.util.MessageBarUi
 import com.example.diary.util.Constants
 import com.example.diary.util.Constants.APP_ID
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 class AuthScreenViewModel : ViewModel() {
@@ -27,7 +31,8 @@ class AuthScreenViewModel : ViewModel() {
     fun addErrorOrMessage(message: String? = null, error: Exception? = null) {
         _state.update {
             it.copy(
-                messageBarUi = it.messageBarUi.copy(message = message, exception = error)
+                messageBarUi = it.messageBarUi.copy(message = message, exception = error),
+                isLoading = false
             )
         }
     }
@@ -40,29 +45,54 @@ class AuthScreenViewModel : ViewModel() {
         }
     }
 
-    fun signInWithMongoAtlas(
-        token: String
-    ) {
-        viewModelScope.launch {
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    app
-                        .login(
-                            Credentials.jwt(
-                                jwtToken = token
-                            )
-                        ).loggedIn
-                }
-                if (result) {
+
+    fun signInWithFirebase(token: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val credential = GoogleAuthProvider.getCredential(token, null)
+            val result = FirebaseAuth.getInstance().signInWithCredential(credential).await()
+
+            if (result != null) {
+                signInWithMongoAtlas(token)
+            } else {
+                withContext(Dispatchers.Main){
                     _state.update {
                         it.copy(
-                            isLoading = false,
-                            messageBarUi = it.messageBarUi.copy(
-                                message = "Successfully Authenticated.",
-                                exception = null
+                            messageBarUi = MessageBarUi(
+                                exception = Exception("Sign in failed."),
                             ),
-                            isAuthenticated = true
+                            isAuthenticated = false,
+                            isLoading = false
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun signInWithMongoAtlas(
+        token: String
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = app
+                    .login(
+                        Credentials.jwt(
+                            jwtToken = token
+                        )
+                    ).loggedIn
+
+                withContext(Dispatchers.Main) {
+                    if (result) {
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                messageBarUi = it.messageBarUi.copy(
+                                    message = "Successfully Authenticated.",
+                                    exception = null
+                                ),
+                                isAuthenticated = true
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {

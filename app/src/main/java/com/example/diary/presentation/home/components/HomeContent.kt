@@ -1,5 +1,7 @@
 package com.example.diary.presentation.home.components
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -31,8 +33,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,6 +60,7 @@ import com.example.diary.R
 import com.example.diary.domain.model.Diary
 import com.example.diary.domain.model.Mood
 import com.example.diary.ui.theme.Elevation
+import com.example.diary.util.fetchImagesFromFirebase
 import com.example.diary.util.toInstant
 import com.example.diary.util.toStringTime
 import java.time.Instant
@@ -78,7 +83,9 @@ fun HomeContent(
         ) {
             allDiaries().forEach { (localDate, diaries) ->
                 stickyHeader(key = localDate) {
-                    DateHeader(localDate = localDate)
+                    DateHeader(
+                        localDate = localDate
+                    )
                 }
                 items(
                     items = diaries,
@@ -88,7 +95,7 @@ fun HomeContent(
                 ) { diary ->
                     DiaryHolder(
                         diary = diary,
-                        onDiaryClick = onDiaryClick
+                        onDiaryClick = onDiaryClick,
                     )
                 }
             }
@@ -129,7 +136,8 @@ fun DateHeader(
 
         Column {
             Text(
-                text = localDate.month.toString().lowercase().replaceFirstChar { it.titlecase() }.take(3),
+                text = localDate.month.toString().lowercase().replaceFirstChar { it.titlecase() }
+                    .take(3),
                 style = TextStyle(
                     fontSize = MaterialTheme.typography.titleLarge.fontSize,
                     fontWeight = FontWeight.Light
@@ -153,6 +161,8 @@ fun DiaryHolder(
     diary: Diary,
     onDiaryClick: (String) -> Unit
 ) {
+
+    val context = LocalContext.current
     var componentHeight by remember {
         mutableStateOf(0.dp)
     }
@@ -161,6 +171,35 @@ fun DiaryHolder(
 
     var expandGallery by remember {
         mutableStateOf(false)
+    }
+
+    var galleryLoading by remember {
+        mutableStateOf(false)
+    }
+
+    val downloadedImages = remember {
+        mutableStateListOf<Uri>()
+    }
+
+    LaunchedEffect(key1 = expandGallery) {
+        if (expandGallery && downloadedImages.isEmpty()) {
+            galleryLoading = true
+            fetchImagesFromFirebase(
+                remoteImagePaths = diary.images,
+                onImageDownload = { imageUri ->
+                    downloadedImages.add(imageUri)
+                },
+                onImageDownloadFailed = { exception ->
+                    Toast.makeText(context, exception.message, Toast.LENGTH_SHORT).show()
+                    expandGallery = false
+                    galleryLoading = false
+                },
+                onReadyToDisplay = {
+                    expandGallery = true
+                    galleryLoading = false
+                }
+            )
+        }
     }
 
     Row(
@@ -210,7 +249,8 @@ fun DiaryHolder(
                 )
                 if (diary.images.isNotEmpty()) {
                     ShowGalleryButton(
-                        expandGallery = expandGallery
+                        expandGallery = expandGallery,
+                        galleryLoading = galleryLoading
                     ) {
                         expandGallery = !expandGallery
                     }
@@ -218,7 +258,7 @@ fun DiaryHolder(
 
                 AnimatedVisibility(
                     modifier = Modifier.padding(14.dp),
-                    visible = expandGallery,
+                    visible = expandGallery && !galleryLoading,
                     enter = fadeIn() + expandVertically(
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -227,7 +267,7 @@ fun DiaryHolder(
                     )
                 ) {
                     ExpandableGallery(
-                        images = diary.images
+                        images = downloadedImages
                     )
                 }
             }
@@ -237,7 +277,8 @@ fun DiaryHolder(
 
 @Composable
 fun DiaryHeader(
-    moodName: String, time: Instant
+    moodName: String,
+    time: Instant
 ) {
     val mood by remember {
         mutableStateOf(Mood.valueOf(moodName))
@@ -284,13 +325,15 @@ fun DiaryHeader(
 @Composable
 fun ExpandableGallery(
     modifier: Modifier = Modifier,
-    images: List<String>,
+    images: List<Uri>,
     imageSize: Dp = 40.dp,
     spaceBetween: Dp = 10.dp,
     imageShape: CornerBasedShape = Shapes().small,
 ) {
     //imageSize + spaceBetween = 50 -> represents one item in the row
     // assume the row has a width of 300 / 50 = 6, we got 6 items in the row, -1 are the others images that cannot be saved
+
+    val context = LocalContext.current
 
     BoxWithConstraints(modifier = modifier) {
         // the derived state will not cause the calculation to be recalculated cuz we are inside a composable and it can recompose
@@ -314,7 +357,7 @@ fun ExpandableGallery(
         Row {
             images.take(numberOfVisibleImages.value).forEach { image ->
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
+                    model = ImageRequest.Builder(context)
                         .data(image)
                         .crossfade(true)
                         .build(),
@@ -364,15 +407,19 @@ fun LastImageCountHolder(
 @Composable
 fun ShowGalleryButton(
     expandGallery: Boolean,
+    galleryLoading: Boolean,
     onClick: () -> Unit
 ) {
+
     TextButton(
         onClick = {
             onClick()
         }
     ) {
         Text(
-            text = if (expandGallery) "Hide Gallery" else "Show Gallery",
+            text = if (expandGallery) {
+                if (galleryLoading) "Loading" else "Hide Gallery"
+            } else "Show Gallery",
             style = TextStyle(
                 fontSize = MaterialTheme.typography.bodySmall.fontSize
             )

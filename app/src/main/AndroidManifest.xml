@@ -20,6 +20,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Diary.MySplash"
+            android:configChanges="orientation|screenSize|uiMode"
             android:windowSoftInputMode="adjustResize"
             >
             <intent-filter>

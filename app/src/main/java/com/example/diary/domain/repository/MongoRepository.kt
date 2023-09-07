@@ -10,7 +10,7 @@ interface MongoRepository {
     fun configureRealm()
     fun getAllDiaries(): Flow<RequestState<Map<LocalDate, List<Diary>>>>
     fun getDiaryById(diaryId: ObjectId): Flow<RequestState<Diary>>
-    suspend fun insertDiary(diary: Diary)
-    suspend fun updateDiary(diary: Diary)
+    suspend fun insertDiary(diary: Diary): RequestState<Boolean>
+    suspend fun updateDiary(diary: Diary): RequestState<Boolean>
     suspend fun deleteDiary(diaryId: ObjectId): RequestState<String>
 }

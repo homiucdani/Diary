@@ -71,7 +71,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.surface)
         ) { paddingValues ->
-
             HomeContent(
                 modifier = Modifier
                     .fillMaxSize()

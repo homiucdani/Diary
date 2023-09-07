@@ -7,10 +7,12 @@ import com.example.diary.data.remote.MongoRepositoryImpl
 import com.example.diary.util.Constants.APP_ID
 import com.example.diary.util.RequestState
 import io.realm.kotlin.mongodb.App
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeViewModel : ViewModel() {
 
@@ -29,32 +31,37 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun observeAllDiaries() {
+    private fun observeAllDiaries() {
         _state.update {
             it.copy(
                 isLoading = true
             )
         }
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             MongoRepositoryImpl.getAllDiaries().collect { result ->
                 when (result) {
                     is RequestState.Success -> {
-                        _state.update {
-                            it.copy(
-                                diaries = result.data,
-                                isLoading = false
-                            )
+                        withContext(Dispatchers.Main) {
+                            _state.update {
+                                it.copy(
+                                    diaries = result.data,
+                                    isLoading = false
+                                )
+                            }
                         }
                     }
 
                     is RequestState.Error -> {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                messageBarUi = MessageBarUi(exception = result.data as Exception)
-                            )
+                        withContext(Dispatchers.Main) {
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                    messageBarUi = MessageBarUi(exception = result.data as Exception)
+                                )
+                            }
                         }
                     }
+
                     else -> Unit
                 }
             }

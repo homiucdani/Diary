@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.diary.R
 import com.example.diary.core.presentation.components.MessageBarUi
+import com.example.diary.core.presentation.util.MessageBarUi
 import com.example.diary.presentation.authentication.components.GoogleButton
 
 @Composable
@@ -30,17 +31,23 @@ fun AuthScreen(
     state: AuthScreenState,
     onGoogleButton: () -> Unit
 ) {
-    Scaffold(modifier = Modifier
-        .background(color = MaterialTheme.colorScheme.surface)
-        .statusBarsPadding()
-        .navigationBarsPadding()
+    Scaffold(
+        modifier = Modifier
+            .background(color = MaterialTheme.colorScheme.surface)
+            .statusBarsPadding()
+            .navigationBarsPadding()
     ) { paddingValues ->
         AuthenticationContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
             onGoogleButton = onGoogleButton,
-            state = state
+            isLoading = {
+                state.isLoading
+            },
+            messageBarUi = {
+                state.messageBarUi
+            }
         )
     }
 }
@@ -49,7 +56,8 @@ fun AuthScreen(
 @Composable
 private fun AuthenticationContent(
     modifier: Modifier = Modifier,
-    state: AuthScreenState,
+    isLoading: () -> Boolean,
+    messageBarUi: () -> MessageBarUi,
     onGoogleButton: () -> Unit
 ) {
 
@@ -61,7 +69,7 @@ private fun AuthenticationContent(
         MessageBarUi(
             modifier = Modifier
                 .fillMaxWidth(),
-            messageBarUi = state.messageBarUi
+            messageBarUi = messageBarUi()
         )
 
         Column(
@@ -104,7 +112,7 @@ private fun AuthenticationContent(
         ) {
             GoogleButton(
                 onClick = onGoogleButton,
-                isLoading = state.isLoading
+                isLoading = isLoading()
             )
         }
     }

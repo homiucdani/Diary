@@ -8,5 +8,5 @@ data class HomeState(
     val diaries: Map<LocalDate, List<Diary>> = emptyMap(),
     val isLoading: Boolean = false,
     val error: Exception? = null,
-    val messageBarUi: MessageBarUi = MessageBarUi()
+    val messageBarUi: MessageBarUi = MessageBarUi(),
 )

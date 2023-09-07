@@ -1,6 +1,12 @@
 package com.example.diary.util
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.core.net.toUri
+import com.example.diary.data.local.entity.ImageToDelete
+import com.example.diary.data.local.entity.ImageToUpload
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storageMetadata
 import io.realm.kotlin.types.RealmInstant
 import java.time.Instant
 import java.time.LocalDateTime
@@ -27,7 +33,6 @@ fun Instant.toStringTime(): String {
 
 @Composable
 fun Instant.formatDateTimeToPattern(pattern: String): String {
-    // if the time is not formatted correct then remove "remember"
     val localDateTime = LocalDateTime.ofInstant(this, ZoneId.systemDefault())
     val formatter = DateTimeFormatter.ofPattern(pattern)
     return localDateTime.format(formatter)
@@ -45,8 +50,51 @@ fun Instant.toRealmInstant(): RealmInstant {
 }
 
 fun Long.toInstant(): Instant {
-    return Instant.ofEpochMilli(this).apply {
+    return Instant.ofEpochMilli(this)
+}
 
+fun fetchImagesFromFirebase(
+    remoteImagePaths: List<String>,
+    onImageDownload: (Uri) -> Unit,
+    onImageDownloadFailed: (Exception) -> Unit = {},
+    onReadyToDisplay: () -> Unit = {}
+) {
+    if (remoteImagePaths.isNotEmpty()) {
+        remoteImagePaths.forEachIndexed { index, remoteImagePath ->
+            if (remoteImagePath.trim().isNotEmpty()) {
+                FirebaseStorage.getInstance().reference.child(remoteImagePath.trim()).downloadUrl
+                    .addOnSuccessListener { uri ->
+                        onImageDownload(uri)
+                        if (remoteImagePaths.lastIndexOf(remoteImagePaths.last()) == index) {
+                            onReadyToDisplay()
+                        }
+                    }.addOnFailureListener {
+                        onImageDownloadFailed(Exception("Data is loading..."))
+                    }
+            }
+        }
     }
 }
+
+fun retryUploadImages(
+    imageToUpload: ImageToUpload,
+    onSuccess: () -> Unit
+) {
+    val storage = FirebaseStorage.getInstance().reference
+    storage.child(imageToUpload.remoteImagePath).putFile(
+        imageToUpload.imageUri.toUri(),
+        storageMetadata { },
+        imageToUpload.sessionUri.toUri()
+    ).addOnSuccessListener { onSuccess() }
+}
+
+fun retryDeleteImages(
+    imageToDelete: ImageToDelete,
+    onSuccess: () -> Unit
+) {
+    val storage = FirebaseStorage.getInstance().reference
+    storage.child(imageToDelete.remoteImagePath).delete().addOnSuccessListener { onSuccess() }
+}
+
+
 
