@@ -11,6 +11,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.query.Sort
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -40,6 +41,44 @@ object MongoRepositoryImpl : MongoRepository {
                 .log(LogLevel.ALL)
                 .build()
             realm = Realm.open(config)
+        }
+    }
+
+    override fun filterDiariesByDayOfMonth(localDate: LocalDate): Flow<RequestState<Map<LocalDate, List<Diary>>>> {
+        return if (user != null) {
+            val dateTime = localDate.atStartOfDay(ZoneId.systemDefault())
+            try {
+                realm.query<Diary>(
+                    query = "ownerId == $0 AND date < $1 AND date > $2",
+                    user.id,
+                    RealmInstant.from(
+                        epochSeconds = dateTime.plusDays(1).toEpochSecond(),
+                        nanosecondAdjustment = 0
+                    ),
+                    RealmInstant.from(
+                        epochSeconds = dateTime.toEpochSecond(),
+                        nanosecondAdjustment = 0
+                    )
+                )
+                    .asFlow()
+                    .map { result ->
+                        RequestState.Success(
+                            result.list.groupBy { diary ->
+                                diary.date.toInstant()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                            }
+                        )
+                    }
+            } catch (e: Exception) {
+                flow {
+                    emit(RequestState.Error(e))
+                }
+            }
+        } else {
+            flow {
+                emit(RequestState.Error(UserNotAuthenticatedException()))
+            }
         }
     }
 
@@ -99,7 +138,7 @@ object MongoRepositoryImpl : MongoRepository {
                 }
             }
         } else {
-            RequestState.Error(Exception("Something went wrong."))
+            RequestState.Error(UserNotAuthenticatedException())
         }
     }
 
@@ -117,7 +156,7 @@ object MongoRepositoryImpl : MongoRepository {
                 RequestState.Success(data = true)
             }
         } else {
-            RequestState.Error(data = Exception("Something went wrong."))
+            RequestState.Error(UserNotAuthenticatedException())
         }
     }
 
@@ -136,7 +175,23 @@ object MongoRepositoryImpl : MongoRepository {
                 }
             }
         } else {
-            RequestState.Error(Exception("Something went wrong."))
+            RequestState.Error(UserNotAuthenticatedException())
+        }
+    }
+
+    override suspend fun deleteAllDiaries(): RequestState<Boolean> {
+        return if (user != null) {
+            realm.write {
+                val diaries = query<Diary>(query = "ownerId == $0", user.id).find()
+                try {
+                    delete(diaries)
+                    RequestState.Success(true)
+                } catch (e: Exception) {
+                    RequestState.Error(e)
+                }
+            }
+        } else {
+            RequestState.Error(UserNotAuthenticatedException())
         }
     }
 }

@@ -21,4 +21,6 @@
     <string name="back_arrow">Back Arrow</string>
     <string name="date_icon">Date Icon</string>
     <string name="more_settings">More settings</string>
+    <string name="delete_all_diaries">Delete all diaries</string>
+    <string name="delete_all_diaries_icon">Delete all diaries icon</string>
 </resources>

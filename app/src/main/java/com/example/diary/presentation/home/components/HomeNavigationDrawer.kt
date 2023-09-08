@@ -3,11 +3,11 @@ package com.example.diary.presentation.home.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,20 +31,20 @@ import androidx.compose.ui.unit.dp
 import com.example.diary.R
 import com.example.diary.core.presentation.components.CustomAlertDialog
 
-
-val navDrawerItemReusableModifier = Modifier
-    .fillMaxWidth()
-    .padding(horizontal = 12.dp)
-
 @Composable
 fun HomeNavigationDrawer(
     modifier: Modifier = Modifier,
     drawerState: () -> DrawerState,
     onSignOut: () -> Unit,
+    onDeleteAllClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
 
-    var alertDialogState by remember {
+    var signOutDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var deleteDialog by remember {
         mutableStateOf(false)
     }
 
@@ -66,7 +66,6 @@ fun HomeNavigationDrawer(
                 NavigationDrawerItem(
                     label = {
                         Row(
-                            modifier = navDrawerItemReusableModifier,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -88,7 +87,35 @@ fun HomeNavigationDrawer(
                     },
                     selected = false,
                     onClick = {
-                        alertDialogState = true
+                        signOutDialog = true
+                    }
+                )
+
+                NavigationDrawerItem(
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = stringResource(
+                                    R.string.delete_all_diaries_icon
+                                ),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Text(
+                                text = stringResource(id = R.string.delete_all_diaries),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = MaterialTheme.typography.titleMedium.fontSize
+                            )
+                        }
+                    },
+                    selected = false,
+                    onClick = {
+                        deleteDialog = true
                     }
                 )
             }
@@ -100,10 +127,26 @@ fun HomeNavigationDrawer(
     CustomAlertDialog(
         title = stringResource(R.string.sign_out),
         message = "Are you sure you want to Sign Out from your Google Account?",
-        isOpen = alertDialogState,
+        isOpen = signOutDialog,
         onNoClick = {
-            alertDialogState = false
+            signOutDialog = false
         },
-        onYesClick = onSignOut
+        onYesClick = {
+            onSignOut()
+            signOutDialog = false
+        }
+    )
+
+    CustomAlertDialog(
+        title = "Delete diaries",
+        message = "Are you sure you want to delete all diaries?",
+        isOpen = deleteDialog,
+        onNoClick = {
+            deleteDialog = false
+        },
+        onYesClick = {
+            onDeleteAllClick()
+            deleteDialog = false
+        }
     )
 }

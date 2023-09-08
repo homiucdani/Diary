@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -134,7 +133,8 @@ fun NavGraphBuilder.homeRoute(
     onDataLoaded: () -> Unit
 ) {
     composable(route = Screen.Home.route) {
-        val homeViewModel: HomeViewModel = viewModel()
+        val context = LocalContext.current
+        val homeViewModel: HomeViewModel = hiltViewModel()
         val state = homeViewModel.state.collectAsState().value
 
         LaunchedEffect(key1 = !state.isLoading) {
@@ -144,11 +144,26 @@ fun NavGraphBuilder.homeRoute(
         HomeScreen(
             state = state,
             onSignOut = {
-                homeViewModel.signOut()
-                navigateToAuth()
+                homeViewModel.signOut().also { navigateToAuth() }
             },
             onAddNewDiary = onAddNewDiary,
-            onDiaryClick = navigateToDiaryScreen
+            onDiaryClick = navigateToDiaryScreen,
+            onDeleteAllClick = {
+                homeViewModel.deleteAllDiaries(
+                    onSuccess = {
+                        Toast.makeText(context, "All diaries deleted.", Toast.LENGTH_SHORT).show()
+                    },
+                    onError = { exception ->
+                        Toast.makeText(context, "${exception.message}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onDateSelected = { localDate ->
+                homeViewModel.observeFilteredOrNonFilterDiaries(localDate)
+            },
+            onDateReset = {
+                homeViewModel.observeAllDiaries()
+            }
         )
     }
 }

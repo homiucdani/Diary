@@ -21,6 +21,7 @@ import com.example.diary.presentation.home.components.HomeContent
 import com.example.diary.presentation.home.components.HomeNavigationDrawer
 import com.example.diary.presentation.home.components.HomeTopAppBar
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 
 @Composable
@@ -28,7 +29,10 @@ fun HomeScreen(
     state: HomeState,
     onSignOut: () -> Unit,
     onAddNewDiary: () -> Unit,
-    onDiaryClick: (String) -> Unit
+    onDiaryClick: (String) -> Unit,
+    onDeleteAllClick: () -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
+    onDateReset: () -> Unit
 ) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -42,7 +46,8 @@ fun HomeScreen(
         },
         onSignOut = {
             onSignOut()
-        }
+        },
+        onDeleteAllClick = onDeleteAllClick
     ) {
         Scaffold(
             topBar = {
@@ -52,9 +57,8 @@ fun HomeScreen(
                             drawerState.open()
                         }
                     },
-                    onCalendarClick = {
-                        // TODO() open the calendar dialog only
-                    }
+                    onDateSelected = onDateSelected,
+                    onDateReset = onDateReset
                 )
             },
             floatingActionButton = {
