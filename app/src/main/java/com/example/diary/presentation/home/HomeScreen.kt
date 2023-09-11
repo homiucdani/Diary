@@ -44,9 +44,7 @@ fun HomeScreen(
         drawerState = {
             drawerState
         },
-        onSignOut = {
-            onSignOut()
-        },
+        onSignOut = onSignOut,
         onDeleteAllClick = onDeleteAllClick
     ) {
         Scaffold(

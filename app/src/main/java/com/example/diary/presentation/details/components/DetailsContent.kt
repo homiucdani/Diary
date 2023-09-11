@@ -60,8 +60,8 @@ fun DetailsContent(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = scrollState.maxValue) {
-        scrollState.scrollTo(scrollState.maxValue)
+    LaunchedEffect(key1 = pagerState.isScrollInProgress) {
+        onMoodChange(Mood.values()[pagerState.currentPage])
     }
 
     Column(
@@ -88,7 +88,6 @@ fun DetailsContent(
                         .build(),
                     contentDescription = "${Mood.values()[pageNumber].name} icon"
                 )
-                onMoodChange(Mood.values()[pageNumber])
             }
 
             Spacer(modifier = Modifier.height(30.dp))
