@@ -8,14 +8,16 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import com.example.diary.data.local.ImageToDeleteDao
-import com.example.diary.data.local.ImageToUploadDao
-import com.example.diary.navigation.Screen
 import com.example.diary.navigation.SetupNavGraph
-import com.example.diary.ui.theme.DiaryTheme
-import com.example.diary.util.Constants.APP_ID
-import com.example.diary.util.retryDeleteImages
-import com.example.diary.util.retryUploadImages
+import com.example.mongo.local.ImageToDeleteDao
+import com.example.mongo.local.ImageToUploadDao
+import com.example.mongo.mapper.toImageToDelete
+import com.example.mongo.mapper.toImageToUpload
+import com.example.ui.theme.DiaryTheme
+import com.example.util.Constants.APP_ID
+import com.example.util.Screen
+import com.example.util.retryDeleteImages
+import com.example.util.retryUploadImages
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import io.realm.kotlin.mongodb.App
@@ -83,7 +85,7 @@ class MainActivity : ComponentActivity() {
             val result = imageToUploadDao.getAllImages()
             result.forEach { imageToUpload ->
                 retryUploadImages(
-                    imageToUpload = imageToUpload,
+                    imageToUpload = imageToUpload.toImageToUpload(),
                     onSuccess = {
                         scope.launch(Dispatchers.IO) {
                             imageToUploadDao.cleanupImage(imageToUpload.id)
@@ -106,7 +108,7 @@ class MainActivity : ComponentActivity() {
             imageToDeleteDao.getAllImagesToDelete().collect { images ->
                 images.forEach { imageToDelete ->
                     retryDeleteImages(
-                        imageToDelete = imageToDelete,
+                        imageToDelete = imageToDelete.toImageToDelete(),
                         onSuccess = {
                             scope.launch {
                                 imageToDeleteDao.cleanupImages(imageToDelete.id)

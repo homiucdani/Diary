@@ -1,8 +1,8 @@
 package com.example.diary.di
 
 import android.content.Context
-import com.example.diary.connectivity.ConnectivityObserver
-import com.example.diary.connectivity.NetworkConnectivityObserver
+import com.example.util.connectivity.ConnectivityObserver
+import com.example.util.connectivity.NetworkConnectivityObserver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

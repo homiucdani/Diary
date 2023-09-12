@@ -2,10 +2,10 @@ package com.example.diary.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.diary.data.local.ImageDatabase
-import com.example.diary.data.local.ImageToDeleteDao
-import com.example.diary.data.local.ImageToUploadDao
-import com.example.diary.util.Constants
+import com.example.mongo.local.ImageDatabase
+import com.example.mongo.local.ImageToDeleteDao
+import com.example.mongo.local.ImageToUploadDao
+import com.example.util.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

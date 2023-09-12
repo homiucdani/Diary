@@ -2,7 +2,7 @@
 
 buildscript {
     dependencies {
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.47")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.48")
         classpath("com.google.gms:google-services:4.3.15")
     }
 }
@@ -13,4 +13,8 @@ plugins {
     id("com.google.gms.google-services") version "4.3.15" apply false
     id("com.google.devtools.ksp") version "1.9.0-1.0.13" apply false
     id("io.realm.kotlin") version "1.10.2" apply false
+
+    @Suppress("DSL_SCOPE_VIOLATION")
+    alias(libs.plugins.com.android.library) apply false
+
 }
